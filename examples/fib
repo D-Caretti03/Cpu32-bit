@@ -1,0 +1,23 @@
+LOAD 1 20 ; r1 = 20
+MOV 10 1
+LOAD 2 0 ; r2 = 0 used for the result
+JZ 1 end
+
+; first two fibonacci
+LOAD 3 1 ; r3 = 1  fib(n-1)
+LOAD 4 0 ; r4 = 0  fib(n-2)
+
+; while r1 != 0 
+; r4 = r2 + r3
+; r2 = r3
+; r3 = r4
+loop:
+  ADD 4 2 3
+  MOV 2 3
+  MOV 3 4
+  DEC 1 1
+  JNZ 1 loop
+
+end:
+  MOV_RES 2
+  DONE

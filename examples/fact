@@ -1,0 +1,16 @@
+LOAD 1 8
+LOAD 2 1
+JZ 1 end
+
+MOV 3 1 
+DEC 3 1
+JZ 3 end
+
+loop:
+  MUL 2 2 1
+  DEC 1 1
+  JNZ 1 loop
+
+end:
+  MOV_RES 2
+  DONE

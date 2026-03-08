@@ -1,0 +1,11 @@
+LOAD 1 10
+LOAD 2 20
+JE 1 2 end
+LOAD 3 10
+LOAD 4 20
+JNE 3 4 end
+LOAD 5 10
+LOAD 6 20
+
+end:
+  DONE

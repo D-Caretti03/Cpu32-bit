@@ -1,0 +1,30 @@
+LOAD 1 8
+JZ 1 end
+MOV 3 1
+CALL fact
+PRINT 2
+
+end:
+  MOV_RES 2
+  DONE
+
+fact:
+  DEC 3 1
+  JZ 3 return
+  CALL fact_rec
+  RET
+
+return:
+  LOAD 2 1
+  RET
+
+fact_rec:
+  MOV 15 1
+
+  DEC 1 1
+  CALL fact
+
+  MOV 1 15
+  PRINT 2
+  MUL 2 1 2
+  RET
