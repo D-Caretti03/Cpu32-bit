@@ -1,13 +1,19 @@
 #include <algorithm>
+#include <cstdio>
 #include <iostream>
 #include <cstdint>
 #include <fstream>
 #include <iterator>
 #include <iomanip>
+#include <ostream>
 #include <sys/types.h>
+#include <unistd.h>
+#include <unordered_map>
 #include <vector>
+#include <time.h>
+#include <functional>
 
-//#define DEBUG
+#define DEBUG
 //#define DUMP
 //#define STATS
 
@@ -52,7 +58,7 @@ class Cpu {
     void Done();
     
     uint8_t mMemory[MEMORY_SIZE]{};
-    uint16_t mRegisters[16] {};
+    uint64_t mRegisters[16] {};
     uint16_t Pc = 0;
     std::vector<uint16_t> Sp {};
     std::vector<uint16_t> Stack {};
@@ -64,30 +70,31 @@ class Cpu {
     #endif
 
     typedef void (Cpu::*CpuFunc) ();
-    CpuFunc table[0xFF];
+    using CpuF = std::function<void()>;
+    CpuF table[0xFF];
 };
 
 Cpu::Cpu(){
   Reset();
 
-  table[0x0] = &Cpu::Load;
-  table[0x1] = &Cpu::Mov;
-  table[0x2] = &Cpu::Add;
-  table[0x3] = &Cpu::Sub;
-  table[0x4] = &Cpu::Mul;
-  table[0x5] = &Cpu::Div;
-  table[0x6] = &Cpu::Jmp;
-  table[0x7] = &Cpu::Jz;
-  table[0x8] = &Cpu::Jnz;
-  table[0x9] = &Cpu::Inc;
-  table[0xA] = &Cpu::Dec;
-  table[0xB] = &Cpu::Call;
-  table[0xC] = &Cpu::Ret;
-  table[0xD] = &Cpu::Je;
-  table[0xE] = &Cpu::Jne;
-  table[0xF] = &Cpu::Print;
-  table[0x10] = &Cpu::MovRes;
-  table[0x11] = &Cpu::Done;
+  table[0x0] = [this](){Load();};
+  table[0x1] = [this](){Mov();};
+  table[0x2] = [this](){Add();};
+  table[0x3] = [this](){Sub();};
+  table[0x4] = [this](){Mul();};
+  table[0x5] = [this](){Div();};
+  table[0x6] = [this](){Jmp();};
+  table[0x7] = [this](){Jz();};
+  table[0x8] = [this](){Jnz();};
+  table[0x9] = [this](){Inc();};
+  table[0xA] = [this](){Dec();};
+  table[0xB] = [this](){Call();};
+  table[0xC] = [this](){Ret();};
+  table[0xD] = [this](){Je();};
+  table[0xE] = [this](){Jne();};
+  table[0xF] = [this](){Print();};
+  table[0x10] = [this](){MovRes();};
+  table[0x11] = [this](){Done();};
 }
 
 bool Cpu::LoadProgram(const std::string& filename){
@@ -136,6 +143,9 @@ uint32_t Cpu::Fetch(){
 
   uint32_t instr = mMemory[Pc] | (mMemory[Pc + 1] << 8) | (mMemory[Pc + 2] << 16) | (mMemory[Pc + 3] << 24);
   #ifdef DEBUG
+  std::cout << "\x1b[1J\x1b[H";
+  usleep(500000);
+  DumpRegisters();
   std::cout << "#" << static_cast<int>((Pc /2) + 1) << ": ";
   #endif
   Pc += 4;
@@ -145,7 +155,7 @@ uint32_t Cpu::Fetch(){
 void Cpu::Execute(){
   mInstr = Fetch();
 
-  ((*this).*(table[(mInstr >> 24) & 0xFF])) ();
+  table[(mInstr >> 24) & 0xFF]();
 
   #ifdef DUMP
   DumpRegisters();
@@ -153,7 +163,6 @@ void Cpu::Execute(){
 }
 
 void Cpu::DumpRegisters(){
-  std::cout << "Registers:\n";
   for (int i = 0; i < 16; ++i){
     std::cout << "R" << std::dec << i << ": " << std::setw(3) << static_cast<int>(mRegisters[i]);
     if ((i + 1) % 8 == 0) std::cout << '\n';
